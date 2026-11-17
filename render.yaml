@@ -1,0 +1,31 @@
+# Render Blueprint: https://render.com/docs/blueprint-spec
+# One Docker web service running both processes (Next.js + the loopback-only DNS TCP service) via scripts/start-prod.mjs.
+services:
+  - type: web
+    name: dns-resolution-observatory
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: starter # "free" also works, but sleeps after 15 min idle and cannot attach a disk
+    region: singapore
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: "3000"
+      - key: HOSTNAME
+        value: 0.0.0.0
+      - key: DNS_TCP_HOST
+        value: 127.0.0.1
+      - key: DNS_TCP_PORT
+        value: "7053"
+      - key: DNS_MAX_INFLIGHT
+        value: "64"
+      - key: DNS_SIM_MAX_DOMAINS
+        value: "20000"
+    # Optional: keep generated domain -> address assignments across deploys (paid plans only).
+    # Without a disk the app still works; new assignments just reset on each deploy.
+    # disk:
+    #   name: dns-data
+    #   mountPath: /app/data
+    #   sizeGB: 1

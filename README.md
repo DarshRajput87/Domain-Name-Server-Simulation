@@ -63,6 +63,16 @@ docker run -d -p 3000:3000 -v dns-data:/app/data dns-observatory
 
 The image runs `scripts/start-prod.mjs`, a small supervisor that starts the bundled DNS service (`dist/dns-server.mjs`, loopback only) and the Next.js standalone server (`server.js`). If either process exits, the container exits too, so the platform restarts it. The process runs as the unprivileged `node` user. Mount `/app/data` as a volume to keep generated domain assignments across restarts; the image seeds it with the shipped CSV.
 
+### Render
+
+`render.yaml` is a Render Blueprint that builds the Dockerfile as one web service with `/api/health` as its health check.
+
+1. Push the repo to GitHub/GitLab.
+2. In Render: **New → Blueprint**, pick the repo, and apply. (Or **New → Web Service**, runtime **Docker**, health check path `/api/health`.)
+3. Custom domain: in the service's **Settings → Custom Domains**, add your domain and create the CNAME record Render shows (pointing at `<service>.onrender.com`). Remove any old record pointing at another host.
+
+The `starter` plan stays awake; `free` works but sleeps after 15 minutes idle. To keep generated domain assignments across deploys, uncomment the `disk` block (paid plans).
+
 ### Without Docker
 
 ```bash

@@ -1,6 +1,9 @@
 // Server-only: one persistent, multiplexed NDJSON connection from Next.js to the DNS TCP service.
 import net from "node:net";
 import type { ClientMessage, ServerMessage } from "@/shared/dns";
+import { Resolver } from "../../server/resolver";
+import { createSession } from "../../server/session";
+import { simTransport } from "../../server/transport";
 
 const HOST = process.env.DNS_TCP_HOST ?? "127.0.0.1";
 const PORT = Number(process.env.DNS_TCP_PORT ?? 7053);
@@ -50,7 +53,7 @@ class DnsGateway {
     return this.connecting;
   }
 
-  private dispatch(m: ServerMessage) {
+  protected dispatch(m: ServerMessage) {
     const qid = m.t === "event" ? m.e.qid : m.t === "error" ? m.qid : undefined;
     if (qid) this.byQid.get(qid)?.(m);
     else this.control.forEach((l) => l(m));
@@ -68,7 +71,6 @@ class DnsGateway {
 
   /** Request/response for control messages (ping, flush). */
   async request<T extends ServerMessage["t"]>(m: ClientMessage, expect: T, timeoutMs = 2000): Promise<Extract<ServerMessage, { t: T }>> {
-    await this.connect();
     return new Promise((resolve, reject) => {
       const l: Listener = (r) => {
         if (r.t !== expect) return;
@@ -83,7 +85,23 @@ class DnsGateway {
   }
 }
 
+/**
+ * Serverless hosts (Vercel) cannot run a long-lived TCP service, so the resolver runs in-process instead.
+ * Same protocol and code path as the TCP server, minus the socket. The cache lives per function instance.
+ */
+class EmbeddedGateway extends DnsGateway {
+  // Deliver asynchronously, like a socket would, so callers can subscribe before the first event arrives.
+  private session = createSession(new Resolver(simTransport), (m) => queueMicrotask(() => this.dispatch(m)));
+
+  override async send(m: ClientMessage) {
+    this.session.handle(m);
+  }
+}
+
+// DNS_MODE: "tcp" (default) talks to the separate service; "embedded" runs it in-process (default on Vercel).
+const MODE = process.env.DNS_MODE ?? (process.env.VERCEL ? "embedded" : "tcp");
+
 // Survive Next.js dev hot reloads without leaking sockets.
 const g = globalThis as typeof globalThis & { __dnsGateway?: DnsGateway };
-export const gateway = (g.__dnsGateway ??= new DnsGateway());
-export const gatewayTarget = `${HOST}:${PORT}`;
+export const gateway = (g.__dnsGateway ??= MODE === "embedded" ? new EmbeddedGateway() : new DnsGateway());
+export const gatewayTarget = MODE === "embedded" ? "embedded (in-process)" : `${HOST}:${PORT}`;

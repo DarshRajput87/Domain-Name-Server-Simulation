@@ -27,13 +27,16 @@ class IpRegistry {
   private next = 0;
 
   private file = "";
+  private writable = true; // false after the first failed write (e.g. read-only serverless filesystem)
   // Caps how many generated names are stored, so public traffic cannot grow the CSV or memory forever.
   private maxRows = Math.max(0, Number(process.env.DNS_SIM_MAX_DOMAINS) || 20000);
 
   private persist(fn: () => void) {
+    if (!this.writable) return;
     try {
       fn();
     } catch (err) {
+      this.writable = false;
       console.warn(`[dns-tcp] could not write ${this.file}: ${(err as Error).message} (continuing in memory)`);
     }
   }

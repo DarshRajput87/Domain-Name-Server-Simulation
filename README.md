@@ -50,7 +50,13 @@ The CSV ships with about 1000 popular domains (from the [Tranco](https://tranco-
 
 ## Deploy
 
-The app is two processes: the Next.js web server and the DNS TCP service it talks to over a persistent socket. Both must run on the same host. That rules out serverless platforms such as Vercel and Netlify functions. Use any host that runs a long-lived container or Node process: Docker/Compose, Fly.io, Railway, Render, a VPS, Kubernetes, ECS and so on.
+By default the app is two processes: the Next.js web server and the DNS TCP service it talks to over a persistent socket, on the same host. Use any host that runs a long-lived container or Node process: Docker/Compose, Fly.io, Railway, Render, a VPS, Kubernetes, ECS and so on.
+
+### Vercel (embedded mode)
+
+Serverless platforms cannot run the separate TCP service, so on Vercel the resolver runs inside the API functions instead (`DNS_MODE=embedded`, the default when `VERCEL` is set). It uses the same protocol handling (`server/session.ts`) and resolver; only the socket hop is skipped. Import the repo in Vercel with the default Next.js settings; nothing else is needed.
+
+Trade-offs: each function instance keeps its own cache, and it is lost when the instance is recycled, so cache hits can look inconsistent between requests. The filesystem is read-only, so newly generated domain assignments live in memory only; the shipped `data/sim-domains.csv` is still loaded. Set `DNS_MODE=tcp` or `DNS_MODE=embedded` to override the automatic choice anywhere.
 
 ### Docker (recommended)
 

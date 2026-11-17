@@ -11,6 +11,8 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Self-contained server in .next/standalone for the Docker image (see Dockerfile).
   output: "standalone",
+  // The embedded resolver (Vercel) reads the seed domain CSV at runtime; make sure it ships with the API functions.
+  outputFileTracingIncludes: { "/api/*": ["./data/sim-domains.csv"] },
   poweredByHeader: false,
   cacheComponents: true,
   partialPrefetching: true,

@@ -1,0 +1,16 @@
+services:
+  web:
+    build: .
+    image: dns-resolution-observatory
+    ports:
+      - "3000:3000"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      # Keeps generated domain -> address assignments across container restarts.
+      - dns-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  dns-data:

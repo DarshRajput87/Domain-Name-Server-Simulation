@@ -1,0 +1,275 @@
+# Feature: Interactive DNS Resolution Graph
+
+Act as a senior full-stack engineer specializing in Next.js, network protocols, and interactive data visualization.
+
+Implement an **Interactive DNS Resolution Simulator** in the existing project. The main feature must visualize DNS resolution as a dynamic, animated graph whenever a user searches for a domain.
+
+## 1. Main interface
+
+- Provide a domain search input and a Resolve button.
+- Display a large interactive graph as the primary dashboard component.
+- Include nodes for Client, DNS Cache, Recursive Resolver, Root DNS Server, TLD DNS Server, and Authoritative DNS Server.
+- Add a result panel showing the domain, record type, resolved IP address, status, and resolution duration.
+- Include live logs and a compact query statistics panel.
+- Use a polished dark theme with navy backgrounds, blue query indicators, purple processing indicators, green successful responses, and red errors.
+- Ensure the layout is responsive and accessible.
+
+## 2. Graph visualization
+
+Use React Flow (`@xyflow/react`) with custom node components and animated edges.
+
+Every node must have a label, icon, status indicator, and short explanation.
+
+Node states:
+- Idle
+- Active
+- Query sent
+- Waiting for response
+- Cache hit
+- Cache miss
+- Referral received
+- Resolved
+- Failed
+
+Animate the connection between nodes when a query or response occurs. Highlight the active node and connection. Show a short label on each edge, such as `DNS Query`, `Cache Miss`, `Referral: .com`, `A Record Response`, or `Final Answer`.
+
+The graph must update according to actual backend events rather than replaying a fixed animation.
+
+## 3. DNS resolution scenarios
+
+### Cache hit
+Client → DNS cache/resolver → Client.
+
+Show the cached record, remaining TTL if available, and a successful response. Do not activate the root, TLD, or authoritative nodes.
+
+### Cache miss
+Client → Recursive resolver → Root server → TLD server → Authoritative server.
+
+Show the following actions:
+1. The resolver checks its cache and finds no valid record.
+2. The root server returns a referral to the appropriate TLD name servers.
+3. The TLD server returns a referral to the authoritative name servers.
+4. The authoritative server returns the requested DNS record.
+5. The resolver caches the answer according to its TTL.
+6. The resolver returns the answer to the client.
+
+Animate the response path back to the client.
+
+Support at least A and AAAA record query types, and display NXDOMAIN or other appropriate errors when applicable.
+
+## 4. Backend integration
+
+Keep the existing Node.js TCP socket server as the networking component.
+
+Implement a structured event protocol so the frontend can receive events such as:
+- QUERY_STARTED
+- CACHE_CHECK
+- CACHE_HIT
+- CACHE_MISS
+- ROOT_QUERY
+- ROOT_REFERRAL
+- TLD_QUERY
+- TLD_REFERRAL
+- AUTHORITATIVE_QUERY
+- DNS_RESPONSE
+- QUERY_COMPLETED
+- QUERY_FAILED
+
+Each event should include a query ID, timestamp, event type, relevant node ID, message, and relevant response data.
+
+Connect the frontend to these events through an appropriate live-update mechanism. Ensure the TCP server remains a separate process or service where necessary.
+
+Do not pretend that the public DNS hierarchy was contacted if the backend only uses simulated records. Clearly distinguish simulated results from actual DNS resolution.
+
+## 5. Logs and statistics
+
+Show timestamped events, domain, record type, response status, resolved address, and duration.
+
+Track total queries, successful queries, failed queries, cache hits, cache misses, and average response time.
+
+## 6. Engineering requirements
+
+- Inspect the existing project structure before modifying files.
+- Reuse existing components and dependencies where possible.
+- Keep DNS resolution logic separate from UI components.
+- Use TypeScript types for nodes, edges, events, DNS records, and query results.
+- Handle connection failures, timeouts, invalid domains, and unsupported record types.
+- Prevent overlapping animations and stale results when multiple searches occur.
+- Preserve existing functionality and styling unless a change is necessary.
+- Do not use hardcoded successful results as if they came from a real lookup.
+- Provide a summary of modified files, installation commands, and instructions for running and testing the complete project.
+
+Implement the complete feature, not just a static mockup.
+## Feature: 3D Interactive Globe for DNS Resolution Visualization
+
+Act as a senior frontend engineer and 3D visualization specialist. Enhance the existing Next.js DNS Simulator by creating an immersive, interactive **3D globe visualization that shows a DNS query travelling across the globe to discover a domain's IP address**.
+
+### 1. Main Visual Experience
+
+- Make a large, realistic 3D Earth globe the central focus of the dashboard.
+- Use Three.js with React Three Fiber and Drei, reusing existing dependencies where possible.
+- Render Earth with detailed textures, subtle atmospheric glow, illuminated continents, cloud layers, and a dark space background with stars.
+- Show network locations as glowing points on the globe, representing the client, recursive DNS resolver, root DNS infrastructure, TLD servers, and authoritative DNS server.
+- Draw curved, glowing connection arcs across the Earth's surface between relevant locations.
+- Keep the globe interactive: allow rotation, zooming, and dragging without interrupting an active DNS lookup.
+
+### 2. Animated DNS Journey
+
+When the user enters a domain and clicks **Resolve Domain**, animate the DNS request as a luminous particle travelling across the globe.
+
+The animation must follow these logical stages:
+
+1. **Client:** A glowing marker appears at the client's configured location and initiates the query.
+2. **DNS Cache:** Show a cache-check indicator. If the record exists and is valid, animate the response returning immediately without visiting the other DNS servers.
+3. **Recursive Resolver:** On a cache miss, send the request to the recursive resolver.
+4. **Root DNS Server:** Animate a particle travelling to a root-server location. Display the root referral to the relevant TLD.
+5. **TLD DNS Server:** Travel to the appropriate TLD server and show the referral to the authoritative name server.
+6. **Authoritative DNS Server:** Travel to the authoritative server and retrieve the requested record.
+7. **Response Journey:** Animate a differently colored response particle returning to the resolver and then the client.
+
+Show the current stage, active server, request type, response status, and a concise explanation throughout the animation.
+
+Use distinct visual states:
+- Blue: outgoing DNS query.
+- Purple: referral and routing.
+- Green: successful response.
+- Amber: processing or cache miss.
+- Red: failure or timeout.
+
+Display small information labels beside active locations, with smooth transitions and readable typography.
+
+### 3. Globe and DNS Information Layout
+
+Build a polished, responsive dashboard with:
+
+- A domain search bar above or beside the globe.
+- A large central 3D Earth occupying most of the screen.
+- Animated arcs and travelling particles.
+- A live DNS journey timeline.
+- A result panel displaying the queried domain, record type, resolved IP address, status, TTL, and resolution duration when available.
+- A compact event log showing each DNS request, referral, response, and cache decision.
+- Controls for animation speed, globe rotation, zoom, and replaying the lookup.
+- A legend explaining the node types, connection lines, and particle colors.
+
+After a successful resolution, highlight the final destination and display the resolved IP in a clear success panel.
+
+### 4. Realistic Network Visualization
+
+- Use plausible, configurable geographic coordinates for network nodes when location data is available.
+- Do not assume that an IP address identifies the exact physical location of a DNS server.
+- Clearly distinguish illustrative locations from verified server locations.
+- Use actual backend DNS events to drive the animation whenever the backend provides them.
+- If the current implementation uses simulated DNS records, label the experience as a simulation.
+- Never imply that a particle's geographic route is the literal physical path taken by internet packets.
+- Model DNS referrals accurately, including the difference between root servers, TLD name servers, and authoritative name servers.
+
+### 5. Technical Implementation
+
+- Framework: Next.js with TypeScript.
+- 3D rendering: Three.js, React Three Fiber, and Drei.
+- Styling: Tailwind CSS.
+- Networking: Integrate with the existing Node.js TCP socket DNS server.
+- Events: Drive globe animations from structured DNS lifecycle events received through the existing backend integration.
+- Keep the visualization modular, separating globe rendering, network nodes, animated arcs, particle movement, DNS state, and result panels.
+- Clean up animation frames, event subscriptions, and WebGL resources correctly.
+- Use dynamic imports for browser-only 3D components when necessary for Next.js compatibility.
+- Optimize texture sizes, rendering resolution, particle counts, and animation updates for smooth performance.
+- Provide a fallback interface when WebGL is unavailable.
+
+### 6. Token and Code Optimization
+
+- Inspect the existing codebase before modifying it.
+- Reuse existing components, types, dependencies, and DNS event handlers.
+- Modify only the files necessary for this feature.
+- Avoid duplicating existing functionality or rewriting unrelated components.
+- Do not add redundant dependencies.
+- Keep TypeScript types and event schemas centralized.
+- Generate only the required code and avoid printing unchanged files.
+- Preserve all existing DNS functionality and dashboard features.
+- Run available lint, type-check, and build commands after implementation.
+
+### Expected Result
+
+The final application should feel like an interactive global network observatory. When a user searches for a domain, they should visually follow a glowing request travelling across a rotating 3D Earth, observe the DNS cache check and server referrals, watch the authoritative server return the IP record, and see the response travel back to the client.
+
+**Prioritize a visually impressive 3D globe, smooth journey animations, accurate DNS behavior, and a clear educational experience. Implement the complete feature in the existing project rather than producing a static mockup.**
+
+
+## 7. Token Optimization and Efficient Implementation
+
+Act as a token-efficient senior software engineer. Implement the DNS Resolution Simulator with minimal unnecessary code, minimal duplication, and efficient use of development resources.
+
+### A. Minimize Code and Context Consumption
+- Inspect the existing codebase before making changes. Reuse existing components, utilities, types, and dependencies.
+- Modify only files necessary for the requested feature.
+- Avoid rewriting entire files when a targeted change is sufficient.
+- Do not regenerate existing working functionality.
+- Avoid lengthy explanations, repeated code, redundant comments, and unnecessary documentation.
+- Use concise, meaningful component names and strongly typed shared interfaces.
+- Keep implementation responses focused on modified files, important decisions, and required commands.
+
+### B. Component Reuse
+- Create reusable DNS graph nodes, animated edges, status indicators, log rows, and statistic cards.
+- Keep shared DNS event types in one location.
+- Use configuration-driven node definitions and event mappings instead of duplicating conditional logic.
+- Extract reusable hooks for DNS queries, animation state, and live event subscriptions.
+- Avoid unnecessary wrapper components and excessive component fragmentation.
+
+### C. Dependency Optimization
+- Reuse installed packages before adding new dependencies.
+- Use `@xyflow/react` if already installed; otherwise install it only if required for the graph.
+- Avoid adding multiple libraries that perform the same task.
+- Use CSS animations and existing icon libraries where sufficient instead of introducing animation frameworks unnecessarily.
+- Avoid unnecessary runtime dependencies and oversized packages.
+
+### D. Rendering and Runtime Performance
+- Keep React components small and prevent unnecessary re-renders.
+- Memoize expensive calculations and stable graph node or edge definitions only when beneficial.
+- Avoid recreating graph layouts, event handlers, and static configuration objects on every render.
+- Use efficient state updates for incoming DNS events.
+- Clean up sockets, timers, subscriptions, and event listeners correctly.
+- Prevent duplicate requests, stale query results, memory leaks, and overlapping animations.
+- Batch frequent log updates when appropriate and limit the number of displayed log entries.
+- Do not introduce complex state-management libraries for a small application.
+
+### E. Network and Data Efficiency
+- Send only the information needed by the frontend.
+- Use a compact, typed event schema with consistent event names.
+- Avoid transmitting entire DNS databases, repeated graph configurations, or unnecessary payload fields with every event.
+- Separate control messages from DNS resolution events.
+- Reuse active connections where appropriate and implement sensible timeouts.
+- Cache DNS records according to their TTL and distinguish cached results from fresh resolution.
+- Do not bypass DNS protocol requirements or misrepresent simulated events as real network traffic.
+
+### F. AI-Assisted Coding Token Budget
+When generating or modifying code:
+- First identify the exact files and changes required.
+- Generate only the necessary implementation.
+- Do not print unchanged files or repeat previously generated code.
+- Avoid producing multiple alternative implementations unless requested.
+- Do not repeatedly restate the project requirements.
+- If an error occurs, inspect the relevant error and affected code before changing anything.
+- Fix the root cause rather than rewriting unrelated modules.
+- Summarize completed changes concisely instead of providing a long narrative.
+
+### G. Quality Must Not Be Sacrificed
+Token optimization must never justify:
+- Removing required DNS resolution steps.
+- Replacing real socket communication with a fake frontend animation.
+- Hardcoding successful DNS results.
+- Skipping error handling, input validation, or cleanup.
+- Breaking existing functionality.
+- Reducing accessibility, responsive design, or visual quality.
+- Claiming performance improvements without verification.
+
+### H. Completion Criteria
+Before finishing:
+1. Check for duplicated code and unused dependencies.
+2. Run the available linting, type-checking, and build commands.
+3. Verify cache-hit and cache-miss flows.
+4. Verify the root, TLD, and authoritative referral sequence in simulation mode.
+5. Test successful and failed lookups.
+6. Confirm the graph reflects backend events accurately.
+7. Report only the files changed, commands executed, test results, and any remaining issues.
+
+**Primary objective:** Deliver the complete DNS simulator using the smallest maintainable implementation possible, minimizing unnecessary code generation, dependencies, network payloads, and runtime overhead while preserving correctness and the intended user experience.
